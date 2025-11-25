@@ -2,11 +2,13 @@
 <html>
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Counter Management</title>
 <style>
   body {
     font-family: Arial, sans-serif;
     margin: 20px;
+    overflow-x: hidden;
   }
 
   /* Tab styles */
@@ -33,19 +35,70 @@
     font-weight: bold;
   }
 
-  /* Container widths */
-  #table-container, #summary-container {
-    width: calc(100vw - 50px);
-    max-width: calc(100vw - 50px);
+  /* Shift selector */
+  .shift-selector {
+    margin-bottom: 20px;
+  }
+
+  .shift-selector label {
+    margin-right: 10px;
+    font-weight: bold;
+  }
+
+  .shift-selector select {
+    padding: 5px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+
+  /* Table wrapper with scrollbar */
+  #table-wrapper {
+    width: calc(100vw - 40px);
+    max-width: calc(100vw - 40px);
+    overflow-x: auto;
+    overflow-y: visible;
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    /* Always show horizontal scrollbar */
+    scrollbar-width: thin; /* Firefox */
+  }
+
+  /* Webkit browsers (Chrome, Safari) - always show scrollbar */
+  #table-wrapper::-webkit-scrollbar {
+    height: 12px;
+    -webkit-appearance: none;
+  }
+
+  #table-wrapper::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 6px;
+  }
+
+  #table-wrapper::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 6px;
+  }
+
+  #table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #555;
   }
 
   #table-container {
     user-select: none;
-    max-height: 600px;
-    overflow: auto;
-    margin-bottom: 20px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    touch-action: pan-x; /* Allow horizontal scrolling but prevent vertical */
+    overflow: visible;
+    display: inline-block;
+    min-width: 100%;
+  }
+
+  /* Prevent default touch actions on cells only during drag */
+  #table-container.dragging {
+    touch-action: none;
   }
 
   table {
@@ -53,6 +106,7 @@
   }
 
   th, td {
+    min-width: 50px;
     width: 50px;
     height: 25px;
     text-align: center;
@@ -90,8 +144,15 @@
     font-weight: bold;
   }
 
-  /* GitHub-style summary box */
+  .motor-row {
+    background-color: #ccffcc;
+    font-weight: bold;
+  }
+
+  /* Summary container */
   #summary-container {
+    width: calc(100vw - 40px);
+    max-width: calc(100vw - 40px);
     margin-top: 20px;
     position: relative;
     background-color: #f6f8fa;
@@ -184,13 +245,25 @@
 <body>
   <h2>Counter Management System</h2>
   
+  <!-- Shift Selector -->
+  <div class="shift-selector">
+    <label for="shift-select">Shift:</label>
+    <select id="shift-select">
+      <option value="morning" selected>Morning (10:00)</option>
+      <option value="night">Night (22:00)</option>
+    </select>
+  </div>
+
   <!-- Tabs -->
   <div class="tabs">
     <div class="tab active" data-mode="arrival">Arrival</div>
     <div class="tab" data-mode="departure">Departure</div>
   </div>
 
-  <div id="table-container"></div>
+  <!-- Table with horizontal scrollbar wrapper -->
+  <div id="table-wrapper">
+    <div id="table-container"></div>
+  </div>
   
   <div id="summary-container">
     <div id="summary-header">

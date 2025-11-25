@@ -1,7 +1,8 @@
 const cols = 24;
 
-// Mode selection
+// Mode and shift selection
 let mode = "arrival"; // default mode
+let shift = "morning"; // default shift
 
 // Define zone sizes for each mode
 const zoneSizes = {
@@ -16,23 +17,35 @@ const dataStore = {
 };
 
 const container = document.getElementById("table-container");
+const tableWrapper = document.getElementById("table-wrapper");
 const summaryText = document.getElementById("summary-text");
 
+// Drag state variables (moved to global scope)
 let dragging = false;
+let startRow = null;
+let startCol = null;
+let dragDirection = null;
+let paintedCells = new Set();
 
-// Generate column headers: start at 10:00, +30 minutes per column
+// Generate column headers based on shift
 function generateColHeaders() {
   const headers = [];
-  let hour = 10, minute = 0;
+  const startHour = shift === "morning" ? 10 : 22;
+  let hour = startHour, minute = 0;
+  
   for (let i = 0; i < cols; i++) {
     headers.push(`${hour.toString().padStart(2, '0')}${minute.toString().padStart(2, '0')}`);
     minute += 30;
-    if (minute >= 60) { minute = 0; hour += 1; if (hour >= 24) hour = 0; }
+    if (minute >= 60) { 
+      minute = 0; 
+      hour += 1; 
+      if (hour >= 24) hour = 0; 
+    }
   }
   return headers;
 }
 
-const colHeaders = generateColHeaders();
+let colHeaders = generateColHeaders();
 
 // Initialize data for a specific mode, including motor row
 function initializeData(modeName) {
@@ -51,6 +64,41 @@ function getCurrentData() {
     dataStore[mode] = initializeData(mode);
   }
   return dataStore[mode];
+}
+
+function handleDrag(currentRow, currentCol) {
+  // Determine drag direction on first move
+  if (dragDirection === null) {
+    if (currentRow !== startRow && currentCol === startCol) {
+      dragDirection = 'vertical';
+    } else if (currentCol !== startCol && currentRow === startRow) {
+      dragDirection = 'horizontal';
+    } else if (currentRow !== startRow || currentCol !== startCol) {
+      return; // Wait for clearer direction
+    }
+  }
+
+  // Apply direction constraint
+  let targetRow, targetCol;
+  
+  if (dragDirection === 'horizontal') {
+    targetRow = startRow;
+    targetCol = currentCol;
+  } else if (dragDirection === 'vertical') {
+    targetRow = currentRow;
+    targetCol = startCol;
+  } else {
+    return;
+  }
+
+  const key = `${targetRow}-${targetCol}`;
+  if (!paintedCells.has(key)) {
+    const targetCell = container.querySelector(`td[data-row="${targetRow}"][data-col="${targetCol}"]`);
+    if (targetCell) {
+      paintedCells.add(key);
+      toggleCell(targetCell);
+    }
+  }
 }
 
 function renderTable() {
@@ -122,7 +170,7 @@ function renderTable() {
   }
   html += "</tr>";
 
-  // Motorbike row - show index instead of "Motor"
+  // Motorbike row
   html += `<tr class="motor-row">`;
   html += `<th style="border-top:5px solid; border-bottom:5px solid;">${motorRowIndex + 1}</th>`;
   for (let col = 0; col < cols; col++) {
@@ -135,19 +183,17 @@ function renderTable() {
   html += "</table>";
   container.innerHTML = html;
 
-  // Click + drag with horizontal OR vertical direction (not both)
-  let startRow = null;
-  let startCol = null;
-  let dragDirection = null; // 'horizontal', 'vertical', or null
-  let paintedCells = new Set();
-
+  // Click + drag with horizontal OR vertical direction (for both mouse and touch)
   const allCells = container.querySelectorAll("td[data-row]");
+  
   allCells.forEach(td => {
+    // Mouse events
     td.addEventListener("mousedown", (e) => {
       dragging = true;
+      container.classList.add('dragging');
       startRow = Number(td.dataset.row);
       startCol = Number(td.dataset.col);
-      dragDirection = null; // Reset direction
+      dragDirection = null;
       paintedCells.clear();
 
       const key = `${startRow}-${startCol}`;
@@ -161,49 +207,56 @@ function renderTable() {
       
       const currentRow = Number(td.dataset.row);
       const currentCol = Number(td.dataset.col);
+      handleDrag(currentRow, currentCol);
+    });
 
-      // Determine drag direction on first move
-      if (dragDirection === null) {
-        if (currentRow !== startRow && currentCol === startCol) {
-          dragDirection = 'vertical';
-        } else if (currentCol !== startCol && currentRow === startRow) {
-          dragDirection = 'horizontal';
-        }
-        // If moved diagonally on first move, do nothing yet
-        else if (currentRow !== startRow || currentCol !== startCol) {
-          // User moved diagonally - pick direction based on larger movement
-          // or just wait for next move
-          return;
-        }
-      }
+    // Touch events
+    td.addEventListener("touchstart", (e) => {
+      dragging = true;
+      container.classList.add('dragging');
+      tableWrapper.style.overflowX = 'hidden'; // Disable scrolling during drag
+      startRow = Number(td.dataset.row);
+      startCol = Number(td.dataset.col);
+      dragDirection = null;
+      paintedCells.clear();
 
-      // Apply direction constraint
-      let targetRow, targetCol;
+      const key = `${startRow}-${startCol}`;
+      paintedCells.add(key);
+      toggleCell(td);
+      e.preventDefault();
+    });
+
+    td.addEventListener("touchmove", (e) => {
+      if (!dragging) return;
+      e.preventDefault(); // Prevent scrolling
       
-      if (dragDirection === 'horizontal') {
-        targetRow = startRow;
-        targetCol = currentCol;
-      } else if (dragDirection === 'vertical') {
-        targetRow = currentRow;
-        targetCol = startCol;
-      } else {
-        // Direction not yet determined
-        return;
+      // Get the element at touch point
+      const touch = e.touches[0];
+      const element = document.elementFromPoint(touch.clientX, touch.clientY);
+      
+      if (element && element.dataset.row !== undefined) {
+        const currentRow = Number(element.dataset.row);
+        const currentCol = Number(element.dataset.col);
+        handleDrag(currentRow, currentCol);
       }
+    });
 
-      const key = `${targetRow}-${targetCol}`;
-      if (!paintedCells.has(key)) {
-        const targetCell = container.querySelector(`td[data-row="${targetRow}"][data-col="${targetCol}"]`);
-        if (targetCell) {
-          paintedCells.add(key);
-          toggleCell(targetCell);
-        }
-      }
+    td.addEventListener("touchend", (e) => {
+      dragging = false;
+      container.classList.remove('dragging');
+      tableWrapper.style.overflowX = 'auto'; // Re-enable scrolling
+      startRow = null;
+      startCol = null;
+      dragDirection = null;
+      paintedCells.clear();
+      e.preventDefault();
     });
   });
 
+  // Mouse up event
   document.addEventListener("mouseup", () => {
     dragging = false;
+    container.classList.remove('dragging');
     startRow = null;
     startCol = null;
     dragDirection = null;
@@ -247,7 +300,7 @@ function updateAllTotals() {
   document.querySelectorAll(".grandtotal").forEach(cell => {
     const col = Number(cell.dataset.col);
     let sum = 0;
-    for (let r = 0; r < rows - 1; r++) sum += df[r][col]; // skip motor row
+    for (let r = 0; r < rows - 1; r++) sum += df[r][col];
     cell.textContent = sum;
   });
 
@@ -256,7 +309,7 @@ function updateAllTotals() {
 
 function renderSummary(subtotalValues) {
   const df = getCurrentData();
-  const motorRowIndex = df.length - 1; // last row is motor
+  const motorRowIndex = df.length - 1;
   const prefix = mode === "arrival" ? "ACar" : "DCar";
   
   let text = `${prefix}\n\n`;
@@ -281,31 +334,34 @@ function renderSummary(subtotalValues) {
   summaryText.textContent = text;
 }
 
+// Shift selector
+document.getElementById("shift-select").addEventListener("change", (e) => {
+  shift = e.target.value;
+  colHeaders = generateColHeaders();
+  renderTable();
+});
+
 // Tab switching
 document.querySelectorAll(".tab").forEach(tab => {
   tab.addEventListener("click", () => {
-    // Update active tab
     document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
     tab.classList.add("active");
 
-    // Switch mode and re-render
     mode = tab.dataset.mode;
     renderTable();
   });
 });
 
-// Copy to clipboard with visual feedback
+// Copy to clipboard
 document.getElementById("copy-button").addEventListener("click", () => {
   const button = document.getElementById("copy-button");
   const copyText = document.getElementById("copy-text");
   
   navigator.clipboard.writeText(summaryText.textContent)
     .then(() => {
-      // Show success state
       button.classList.add("copied");
       copyText.textContent = "Copied!";
       
-      // Reset after 2 seconds
       setTimeout(() => {
         button.classList.remove("copied");
         copyText.textContent = "Copy";
