@@ -61,8 +61,7 @@
     margin-bottom: 20px;
     border: 1px solid #ddd;
     border-radius: 6px;
-    /* Always show horizontal scrollbar */
-    scrollbar-width: thin; /* Firefox */
+    position: relative;
   }
 
   /* Webkit browsers (Chrome, Safari) - always show scrollbar */
@@ -90,15 +89,9 @@
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
-    touch-action: pan-x; /* Allow horizontal scrolling but prevent vertical */
     overflow: visible;
     display: inline-block;
     min-width: 100%;
-  }
-
-  /* Prevent default touch actions on cells only during drag */
-  #table-container.dragging {
-    touch-action: none;
   }
 
   table {
@@ -106,15 +99,33 @@
   }
 
   th, td {
-    min-width: 50px;
-    width: 50px;
+    min-width: calc((100vw - 100px) / 25);  /* Divide available width by 25 (24 cols + 1 row header) */
+    width: calc((100vw - 100px) / 25);
     height: 25px;
     text-align: center;
-    cursor: pointer;
     background-color: white;
-    border: 1px solid black;
+    border: none;  /* Change from "1px solid black" to "none" */
+    border-top: 1px solid black;    /* Keep top border */
+    border-bottom: 1px solid black; /* Keep bottom border */
+    touch-action: auto;
   }
 
+  tr:first-child th {
+    font-size: 9px;
+  }
+
+  /* Data cells only - disable touch scrolling during drag */
+  td[data-row] {
+    cursor: pointer;
+    touch-action: none;
+  }
+
+  /* When not dragging, allow scrolling on data cells too */
+  body:not(.is-dragging) td[data-row] {
+    touch-action: auto;
+  }
+
+  /* Sticky column headers */
   th {
     position: sticky;
     top: 0;
@@ -122,6 +133,7 @@
     background-color: #ddd;
   }
 
+  /* Sticky row headers (first column) */
   tr th:first-child {
     position: sticky;
     left: 0;
@@ -129,6 +141,7 @@
     background-color: #ccc;
   }
 
+  /* Top-left corner cell */
   tr:first-child th:first-child {
     z-index: 5;
     background-color: #bbb;
@@ -139,9 +152,19 @@
     font-weight: bold;
   }
 
+  .subtotal-row th,
+  .subtotal-row td {
+    touch-action: auto; /* Allow scrolling on subtotal rows */
+  }
+
   .grandtotal-row {
     background-color: #ffcccc;
     font-weight: bold;
+  }
+
+  .grandtotal-row th,
+  .grandtotal-row td {
+    touch-action: auto; /* Allow scrolling on grand total row */
   }
 
   .motor-row {

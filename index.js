@@ -114,6 +114,9 @@ function renderTable() {
   colHeaders.forEach((header, colIndex) => {
     let style = "";
     if ((colIndex + 1) % 2 === 0) style += "border-right: 5px solid;";
+    else {
+    style += "border-right: 1px solid;";
+    } 
     html += `<th style="${style}">${header}</th>`;
   });
   html += "</tr>";
@@ -139,6 +142,9 @@ function renderTable() {
       df[rowIndex].forEach((cell, colIndex) => {
         let style = "";
         if ((colIndex + 1) % 2 === 0) style += "border-right: 5px solid;";
+        else {
+        style += "border-right: 1px dashed;";
+        }
         if (isLastInZone) style += "border-bottom: 5px solid;";
         html += `<td data-row="${rowIndex}" data-col="${colIndex}" style="${style}">${cell}</td>`;
       });
@@ -153,6 +159,9 @@ function renderTable() {
     for (let col = 0; col < cols; col++) {
       let style = "border-top:5px solid; border-bottom:5px solid;";
       if ((col + 1) % 2 === 0) style += " border-right:5px solid;";
+      else{
+        style += " border-right: 1px dashed";
+      }
       html += `<td class="subtotal" data-sub-start="${zoneStart}" data-sub-end="${zoneEnd}" data-col="${col}" style="${style}">0</td>`;
     }
     html += "</tr>";
@@ -166,6 +175,9 @@ function renderTable() {
   for (let col = 0; col < cols; col++) {
     let style = "border-top:5px solid; border-bottom:5px solid;";
     if ((col + 1) % 2 === 0) style += " border-right:5px solid;";
+    else{
+      style += "border-right: 1px dashed";
+    }
     html += `<td class="grandtotal" data-col="${col}" style="${style}">0</td>`;
   }
   html += "</tr>";
@@ -176,6 +188,9 @@ function renderTable() {
   for (let col = 0; col < cols; col++) {
     let style = "border-top:5px solid; border-bottom:5px solid;";
     if ((col + 1) % 2 === 0) style += " border-right:5px solid;";
+    else {
+      style += "border-right: 1px dashed;";
+    }
     html += `<td class="motor" data-row="${motorRowIndex}" data-col="${col}" style="${style}">0</td>`;
   }
   html += "</tr>";
@@ -190,7 +205,7 @@ function renderTable() {
     // Mouse events
     td.addEventListener("mousedown", (e) => {
       dragging = true;
-      container.classList.add('dragging');
+      document.body.classList.add('is-dragging');
       startRow = Number(td.dataset.row);
       startCol = Number(td.dataset.col);
       dragDirection = null;
@@ -213,8 +228,7 @@ function renderTable() {
     // Touch events
     td.addEventListener("touchstart", (e) => {
       dragging = true;
-      container.classList.add('dragging');
-      tableWrapper.style.overflowX = 'hidden'; // Disable scrolling during drag
+      document.body.classList.add('is-dragging');
       startRow = Number(td.dataset.row);
       startCol = Number(td.dataset.col);
       dragDirection = null;
@@ -228,7 +242,7 @@ function renderTable() {
 
     td.addEventListener("touchmove", (e) => {
       if (!dragging) return;
-      e.preventDefault(); // Prevent scrolling
+      e.preventDefault(); // Prevent scrolling during drag
       
       // Get the element at touch point
       const touch = e.touches[0];
@@ -243,20 +257,28 @@ function renderTable() {
 
     td.addEventListener("touchend", (e) => {
       dragging = false;
-      container.classList.remove('dragging');
-      tableWrapper.style.overflowX = 'auto'; // Re-enable scrolling
+      document.body.classList.remove('is-dragging');
       startRow = null;
       startCol = null;
       dragDirection = null;
       paintedCells.clear();
       e.preventDefault();
     });
+
+    td.addEventListener("touchcancel", (e) => {
+      dragging = false;
+      document.body.classList.remove('is-dragging');
+      startRow = null;
+      startCol = null;
+      dragDirection = null;
+      paintedCells.clear();
+    });
   });
 
   // Mouse up event
   document.addEventListener("mouseup", () => {
     dragging = false;
-    container.classList.remove('dragging');
+    document.body.classList.remove('is-dragging');
     startRow = null;
     startCol = null;
     dragDirection = null;
