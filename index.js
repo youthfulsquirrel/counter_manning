@@ -146,6 +146,12 @@ function renderTable() {
         style += "border-right: 1px dashed;";
         }
         if (isLastInZone) style += "border-bottom: 5px solid;";
+        
+        // Add background color based on cell value
+        if (cell === 1) {
+          style += "background-color: blue;";
+        }
+        
         html += `<td data-row="${rowIndex}" data-col="${colIndex}" style="${style}">${cell}</td>`;
       });
 
@@ -187,11 +193,17 @@ function renderTable() {
   html += `<th style="border-top:5px solid; border-bottom:5px solid;">${motorRowIndex + 1}</th>`;
   for (let col = 0; col < cols; col++) {
     let style = "border-top:5px solid; border-bottom:5px solid;";
-    if ((col + 1) % 2 === 0) style += " border-right:5px solid;";
+    if ((colIndex + 1) % 2 === 0) style += " border-right:5px solid;";
     else {
       style += "border-right: 1px dashed;";
     }
-    html += `<td class="motor" data-row="${motorRowIndex}" data-col="${col}" style="${style}">0</td>`;
+    
+    // Add background color based on motor cell value
+    if (df[motorRowIndex][col] === 1) {
+      style += "background-color: blue;";
+    }
+    
+    html += `<td class="motor" data-row="${motorRowIndex}" data-col="${col}" style="${style}">${df[motorRowIndex][col]}</td>`;
   }
   html += "</tr>";
 
