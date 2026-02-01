@@ -19,6 +19,7 @@ const dataStore = {
 const container = document.getElementById("table-container");
 const tableWrapper = document.getElementById("table-wrapper");
 const summaryText = document.getElementById("summary-text");
+const clearButton = document.getElementById("clear-button");
 
 // Drag state variables (moved to global scope)
 let dragging = false;
@@ -26,6 +27,73 @@ let startRow = null;
 let startCol = null;
 let dragDirection = null;
 let paintedCells = new Set();
+
+// LocalStorage functions
+function saveToLocalStorage() {
+  try {
+    localStorage.setItem('counterData', JSON.stringify(dataStore));
+    localStorage.setItem('currentMode', mode);
+    localStorage.setItem('currentShift', shift);
+  } catch (e) {
+    console.error('Error saving to localStorage:', e);
+  }
+}
+
+function loadFromLocalStorage() {
+  try {
+    const savedData = localStorage.getItem('counterData');
+    const savedMode = localStorage.getItem('currentMode');
+    const savedShift = localStorage.getItem('currentShift');
+    
+    if (savedData) {
+      const parsed = JSON.parse(savedData);
+      dataStore.arrival = parsed.arrival;
+      dataStore.departure = parsed.departure;
+    }
+    
+    if (savedMode) {
+      mode = savedMode;
+      // Update active tab
+      document.querySelectorAll(".tab").forEach(t => {
+        t.classList.remove("active");
+        if (t.dataset.mode === mode) {
+          t.classList.add("active");
+        }
+      });
+    }
+    
+    if (savedShift) {
+      shift = savedShift;
+      // Update shift selector
+      document.getElementById("shift-select").value = shift;
+    }
+  } catch (e) {
+    console.error('Error loading from localStorage:', e);
+  }
+}
+
+function clearCurrentMode() {
+  const modeName = mode.charAt(0).toUpperCase() + mode.slice(1);
+  
+  if (confirm(`Are you sure you want to clear all data for ${modeName}? This cannot be undone.`)) {
+    // Reset data for current mode
+    dataStore[mode] = initializeData(mode);
+    
+    // Save to localStorage
+    saveToLocalStorage();
+    
+    // Re-render table
+    renderTable();
+    
+    // Show feedback
+    alert(`${modeName} data cleared successfully!`);
+  }
+}
+
+function updateClearButtonText() {
+  const modeName = mode.charAt(0).toUpperCase() + mode.slice(1);
+  clearButton.textContent = `Clear All (${modeName})`;
+}
 
 // Generate column headers based on shift
 function generateColHeaders() {
@@ -315,6 +383,7 @@ function toggleCell(td) {
   td.style.backgroundColor = df[r][c] === 1 ? "blue" : "transparent";
 
   updateAllTotals();
+  saveToLocalStorage(); // Save after every change
 }
 
 function updateAllTotals() {
@@ -377,6 +446,7 @@ function renderSummary(subtotalValues) {
 document.getElementById("shift-select").addEventListener("change", (e) => {
   shift = e.target.value;
   colHeaders = generateColHeaders();
+  saveToLocalStorage(); // Save shift preference
   renderTable();
 });
 
@@ -387,9 +457,14 @@ document.querySelectorAll(".tab").forEach(tab => {
     tab.classList.add("active");
 
     mode = tab.dataset.mode;
+    updateClearButtonText(); // Update button text
+    saveToLocalStorage(); // Save mode preference
     renderTable();
   });
 });
+
+// Clear button
+clearButton.addEventListener("click", clearCurrentMode);
 
 // Copy to clipboard
 document.getElementById("copy-button").addEventListener("click", () => {
@@ -410,6 +485,12 @@ document.getElementById("copy-button").addEventListener("click", () => {
       alert("Copy failed: " + err);
     });
 });
+
+// Load data from localStorage on page load
+loadFromLocalStorage();
+
+// Update clear button text on load
+updateClearButtonText();
 
 // Initial render
 renderTable();
