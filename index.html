@@ -35,9 +35,19 @@
     font-weight: bold;
   }
 
+  /* Controls row */
+  .controls-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    gap: 10px;
+  }
+
   /* Shift selector */
   .shift-selector {
-    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
   }
 
   .shift-selector label {
@@ -50,6 +60,27 @@
     border: 1px solid #ccc;
     border-radius: 4px;
     font-size: 14px;
+  }
+
+  /* Clear button */
+  .clear-button {
+    padding: 8px 16px;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: background-color 0.2s;
+  }
+
+  .clear-button:hover {
+    background-color: #c82333;
+  }
+
+  .clear-button:active {
+    background-color: #bd2130;
   }
 
   /* Table wrapper with scrollbar */
@@ -269,19 +300,25 @@
 <body>
   <h2>Counter Management System</h2>
   
-  <!-- Shift Selector -->
-  <div class="shift-selector">
-    <label for="shift-select">Shift:</label>
-    <select id="shift-select">
-      <option value="morning" selected>Morning (10:00)</option>
-      <option value="night">Night (22:00)</option>
-    </select>
-  </div>
-
   <!-- Tabs -->
   <div class="tabs">
     <div class="tab active" data-mode="arrival">Arrival</div>
     <div class="tab" data-mode="departure">Departure</div>
+  </div>
+
+  <!-- Controls Row -->
+  <div class="controls-row">
+    <!-- Shift Selector -->
+    <div class="shift-selector">
+      <label for="shift-select">Shift:</label>
+      <select id="shift-select">
+        <option value="morning" selected>Morning (10:00)</option>
+        <option value="night">Night (22:00)</option>
+      </select>
+    </div>
+
+    <!-- Clear Button -->
+    <button class="clear-button" id="clear-button">Clear All (Arrival)</button>
   </div>
 
   <!-- Table with horizontal scrollbar wrapper -->
