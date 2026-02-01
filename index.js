@@ -139,20 +139,22 @@ function renderTable() {
       let rowHeaderStyle = isLastInZone ? "border-bottom: 5px solid;" : "";
       html += `<th style="${rowHeaderStyle}">${rowIndex + 1}</th>`;
 
-      df[rowIndex].forEach((cell, colIndex) => {
+      df[rowIndex].forEach((cellValue, colIndex) => {
         let style = "";
         if ((colIndex + 1) % 2 === 0) style += "border-right: 5px solid;";
         else {
-        style += "border-right: 1px dashed;";
+          style += "border-right: 1px dashed;";
         }
         if (isLastInZone) style += "border-bottom: 5px solid;";
         
         // Add background color based on cell value
-        if (cell === 1) {
-          style += "background-color: blue;";
+        if (cellValue === 1) {
+          style += " background-color: blue;";
+        } else {
+          style += " background-color: transparent;";
         }
         
-        html += `<td data-row="${rowIndex}" data-col="${colIndex}" style="${style}">${cell}</td>`;
+        html += `<td data-row="${rowIndex}" data-col="${colIndex}" style="${style}">${cellValue}</td>`;
       });
 
       html += "</tr>";
@@ -199,11 +201,14 @@ function renderTable() {
     }
     
     // Add background color based on motor cell value
-    if (df[motorRowIndex][col] === 1) {
-      style += "background-color: blue;";
+    const motorValue = df[motorRowIndex][col];
+    if (motorValue === 1) {
+      style += " background-color: blue;";
+    } else {
+      style += " background-color: transparent;";
     }
     
-    html += `<td class="motor" data-row="${motorRowIndex}" data-col="${col}" style="${style}">${df[motorRowIndex][col]}</td>`;
+    html += `<td class="motor" data-row="${motorRowIndex}" data-col="${col}" style="${style}">${motorValue}</td>`;
   }
   html += "</tr>";
 
